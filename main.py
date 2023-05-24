@@ -49,7 +49,7 @@ urban_lag_model = ML_Lag(y_urban.values.reshape((-1, 1)), X_urban.values, w_urba
 print("Finished  urban_lag_model")
 
 print("Starting  rural_lag_model")
-rural_lag_model = ML_Lag(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
+#rural_lag_model = ML_Lag(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
 print("Finished  rural_lag_model")
 
 # Fit the spatial error models
@@ -58,12 +58,12 @@ urban_error_model = ML_Error(y_urban.values.reshape((-1, 1)), X_urban.values, w_
 print("Finished  urban_error_model")
 
 print("Starting  rural_error_model")
-rural_error_model = ML_Error(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
+#rural_error_model = ML_Error(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
 print("Finished  rural_error_model")
 
 
 # Print the summaries
 print("Urban Lag Model Summary:\n", urban_lag_model.summary)
-print("Rural Lag Model Summary:\n", rural_lag_model.summary)
+#print("Rural Lag Model Summary:\n", rural_lag_model.summary)
 print("Urban Error Model Summary:\n", urban_error_model.summary)
-print("Rural Error Model Summary:\n", rural_error_model.summary)
+#print("Rural Error Model Summary:\n", rural_error_model.summary)
