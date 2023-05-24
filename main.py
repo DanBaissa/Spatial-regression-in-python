@@ -23,13 +23,12 @@ le.fit(Syria['Month'])
 # Apply the fitted encoder to the pandas column
 Syria['Month'] = le.transform(Syria['Month'])
 
-# Create weights matrix for the full dataset
-#w_full = weights.Queen.from_dataframe(Syria)
-#w_full.transform = 'r'
-
 # Separate Urban and Rural datasets
 Urban_Syria = Syria[Syria['Urban'] == 'Urban'].dropna()
 Rural_Syria = Syria[Syria['Urban'] == 'Rural'].dropna()
+
+# Create the interaction term for the rural dataset
+Rural_Syria['Drought_Albedo'] = Rural_Syria['Drought'] * Rural_Syria['Albedo']
 
 # Create weights matrices for the urban and rural datasets
 w_urban = weights.Queen.from_dataframe(Urban_Syria)
@@ -40,8 +39,12 @@ w_rural.transform = 'r'
 # Create the models
 X_urban = Urban_Syria[['Drought', 'Albedo', 'Year', 'Month', 'X', 'Y']]
 y_urban = Urban_Syria['NL']
-X_rural = Rural_Syria[['Drought', 'Albedo', 'Year', 'Month', 'X', 'Y']]
+X_rural = Rural_Syria[['Drought', 'Albedo', 'Year', 'Month', 'X', 'Y', 'Drought_Albedo']]
 y_rural = Rural_Syria['NL']
+
+# Store variable names
+var_names_urban = ['CONSTANT'] + list(X_urban.columns) + ['W_dep_var']
+var_names_rural = ['CONSTANT'] + list(X_rural.columns) + ['W_dep_var']
 
 # Fit the spatial lag models
 print("starting  urban_lag_model")
@@ -49,7 +52,7 @@ urban_lag_model = ML_Lag(y_urban.values.reshape((-1, 1)), X_urban.values, w_urba
 print("Finished  urban_lag_model")
 
 print("Starting  rural_lag_model")
-#rural_lag_model = ML_Lag(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
+rural_lag_model = ML_Lag(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
 print("Finished  rural_lag_model")
 
 # Fit the spatial error models
@@ -58,12 +61,41 @@ urban_error_model = ML_Error(y_urban.values.reshape((-1, 1)), X_urban.values, w_
 print("Finished  urban_error_model")
 
 print("Starting  rural_error_model")
-#rural_error_model = ML_Error(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
+rural_error_model = ML_Error(y_rural.values.reshape((-1, 1)), X_rural.values, w_rural)
 print("Finished  rural_error_model")
 
+# Print the summaries and store
+urban_lag_summary = str(urban_lag_model.summary)
+rural_lag_summary = str(rural_lag_model.summary)
+urban_error_summary = str(urban_error_model.summary)
+rural_error_summary = str(rural_error_model.summary)
 
-# Print the summaries
-print("Urban Lag Model Summary:\n", urban_lag_model.summary)
-#print("Rural Lag Model Summary:\n", rural_lag_model.summary)
-print("Urban Error Model Summary:\n", urban_error_model.summary)
-#print("Rural Error Model Summary:\n", rural_error_model.summary)
+
+summaries = [urban_lag_summary, rural_lag_summary, urban_error_summary, rural_error_summary]
+names = [var_names_urban, var_names_rural, var_names_urban, var_names_rural]
+
+# Replace 'var_X' with actual variable names
+for i, summary in enumerate(summaries):
+    for j, name in enumerate(names[i]):
+        summary = summary.replace(f'var_{j}', name)
+    summaries[i] = summary
+
+
+# Replace newline characters with LaTeX newline command
+summaries = [summary.replace('\n', ' \\\\ ') for summary in summaries]
+
+# Start the LaTeX document
+latex_document = "\\documentclass{article} \n\\begin{document} \n"
+
+# Add each summary to the LaTeX document
+for summary in summaries:
+    latex_document += "\\begin{verbatim} \n"
+    latex_document += summary
+    latex_document += "\n\\end{verbatim} \n"
+
+# End the LaTeX document
+latex_document += "\\end{document}"
+
+# Write the LaTeX document to a .tex file
+with open('model_summaries.tex', 'w') as f:
+    f.write(latex_document)
